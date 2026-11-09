@@ -1,5 +1,5 @@
 {
-  "name": "voting-insd2",
+  "name": "voting-insd2-ux",
   "private": true,
   "scripts": {
     "qa": "node scripts/qa.mjs"
