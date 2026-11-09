@@ -1,0 +1,15 @@
+{
+  "name": "voting-insd2-cloudflare",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply voting-insd2 --local",
+    "db:remote": "wrangler d1 migrations apply voting-insd2 --remote",
+    "qa": "node scripts/qa.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
