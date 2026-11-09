@@ -14,11 +14,11 @@
     {
       "binding": "DB",
       "database_name": "voting-insd2",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "8e8985c9-e61c-4324-9542-db1b6f6938c2",
       "migrations_dir": "migrations"
     }
   ],
   "vars": {
-    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA"
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAF6F23hyYydWMQHf"
   }
 }
