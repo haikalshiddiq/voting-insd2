@@ -1,0 +1,121 @@
+name: Bootstrap and Deploy Cloudflare Voting
+
+on:
+  workflow_dispatch:
+    inputs:
+      turnstile_site_key:
+        description: "Turnstile Site Key. Kosongkan untuk deployment pertama."
+        required: false
+        type: string
+      admin_email:
+        description: "Email admin"
+        required: true
+        default: "haikal.shiddiq@cakrawala.ac.id"
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      INPUT_SITE_KEY: ${{ inputs.turnstile_site_key }}
+      INPUT_ADMIN_EMAIL: ${{ inputs.admin_email }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate repository
+        shell: bash
+        run: |
+          test -f package.json || {
+            echo "package.json tidak ditemukan di root repository"
+            exit 1
+          }
+          test -f wrangler.jsonc || {
+            echo "wrangler.jsonc tidak ditemukan di root repository"
+            exit 1
+          }
+          test -f scripts/bootstrap_d1.py || {
+            echo "scripts/bootstrap_d1.py tidak ditemukan"
+            exit 1
+          }
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || {
+            echo "Secret CLOUDFLARE_API_TOKEN belum tersedia"
+            exit 1
+          }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || {
+            echo "Secret CLOUDFLARE_ACCOUNT_ID belum tersedia"
+            exit 1
+          }
+          test -n "$ADMIN_KEY" || {
+            echo "Secret ADMIN_KEY belum tersedia"
+            exit 1
+          }
+          test -n "$TURNSTILE_SECRET_KEY" || {
+            echo "Secret TURNSTILE_SECRET_KEY belum tersedia"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create or locate D1 database
+        run: python3 scripts/bootstrap_d1.py
+
+      - name: Configure public settings
+        shell: bash
+        run: |
+          SITE_KEY="${INPUT_SITE_KEY:-1x00000000000000000000AA}"
+          ADMIN_EMAIL="${INPUT_ADMIN_EMAIL:-haikal.shiddiq@cakrawala.ac.id}"
+          python3 scripts/patch_public_config.py "$SITE_KEY" "$ADMIN_EMAIL"
+
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply voting-insd2 --remote
+
+      - name: Upload ADMIN_KEY
+        shell: bash
+        run: |
+          printf '%s' "$ADMIN_KEY" | npx wrangler secret put ADMIN_KEY
+
+      - name: Upload Turnstile secret
+        shell: bash
+        run: |
+          printf '%s' "$TURNSTILE_SECRET_KEY" |
+            npx wrangler secret put TURNSTILE_SECRET_KEY
+
+      - name: Run QA
+        run: npm run qa
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+
+      - name: Save generated D1 configuration
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+          git add wrangler.jsonc
+
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: configure Cloudflare D1"
+            git push
+          fi
