@@ -3,7 +3,23 @@
   "name": "voting-insd2",
   "main": "src/index.js",
   "compatibility_date": "2026-11-09",
-  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/admin*"] },
-  "d1_databases": [{ "binding": "DB", "database_name": "voting-insd2", "database_id": "REPLACE_WITH_D1_DATABASE_ID", "migrations_dir": "migrations" }],
-  "vars": { "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY", "ADMIN_EMAILS": "REPLACE_WITH_ADMIN_EMAIL" }
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/admin*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "voting-insd2",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "ADMIN_EMAILS": "haikal.shiddiq@cakrawala.ac.id"
+  }
 }
